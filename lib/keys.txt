@@ -1,0 +1,9 @@
+    define {keyW}=9
+    define {keyS}=13
+    define {keyA}=10
+    define {keyD}=18
+    define {keyNone}=64
+    define {keyReturn}=1
+    define {keyQ}=62
+    define {keySpace}=60
+    

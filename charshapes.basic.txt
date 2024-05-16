@@ -1,0 +1,97 @@
+# Includes
+using "lib/keys.txt"
+using "lib/statements.txt"
+
+include "lib/mem.txt"
+
+number BgSave
+
+@Main:
+    ClearScreen \ Print CHR$(13)+CHR$(13)+CHR$(13)+CHR$(13)+CHR$(13)+CHR$(13)+CHR$(13)
+    Print "PLEASE WAIT WHILE LOADING..."
+    BgSave=Peek({frmColor}) \ Set {frmColor},0
+
+    Set 56334,Get(56334) AND 254
+    Set 1,Get(1) AND 251
+
+    # *** PUT 256 CHARACTERS FOR TEST ***
+    For X=0->255 \ Set {screen}+X,X \ End
+    Set {frmColor},1
+
+    # *** COPY ROM CHARS TO RAM ***
+    For X=0->727 \ Set 12288+X,Get(55296+X) \ End
+
+    For X=0->7 \ Set 12288+X+91*8,Get(12288+X+8) \ End
+    Set 12288+91*8,6 \ Set 12288+91*8+1,12
+
+    For X=0->7 \ Set 12288+X+92*8,Get(12288+X+8*5) \ End
+    Set 12288+92*8,6 \ Set 12288+92*8+1,12
+
+    For X=0->7 \ Set 12288+X+93*8,Get(12288+X+8*9) \ End
+    Set 12288+93*8,6 \ Set 12288+93*8+1,12
+
+    For X=0->7 \ Set 12288+X+94*8,Get(12288+X+8*15) \ End
+    Set 12288+94*8,12 \ Set 12288+94*8+1,24
+
+    For X=0->7 \ Set 12288+X+95*8,Get(12288+X+8*15) \ End
+    Set 12288+95*8,102
+
+    For X=0->7 \ Set 12288+X+96*8,Get(12288+X+8*15) \ End
+    Set 12288+96*8,102 \ Set 12288+96*8+1,102
+
+
+    For X=0->7 \ Set 12288+X+97*8,Get(12288+X+8*21) \ End
+    Set 12288+97*8,12 \ Set 12288+97*8+1,24
+
+    For X=0->7 \ Set 12288+X+98*8,Get(12288+X+8*21) \ End
+    Set 12288+98*8,102
+
+    For X=0->7 \ Set 12288+X+99*8,Get(12288+X+8*21) \ End
+    Set 12288+99*8,51 \ Set 12288+99*8+1,51
+
+    For X=0->6 \ Set 12288+X+100*8+1,Get(12288+X+8*65) \ End
+    Set 12288+100*8,7 \ Set 12288+100*8+1,Get(12288+100*8+1) OR 7 \ Set 12288+100*8+7,0
+
+    For X=0->6 \ Set 12288+X+101*8+1,Get(12288+X+8*69) \ End
+    Set 12288+101*8,7 \ Set 12288+101*8+6,126 \ Set 12288+101*8+7,0
+
+    For X=0->6 \ Set 12288+X+102*8+1,Get(12288+X+8*73) \ End
+    Set 12288+102*8,7 \ Set 12288+102*8+6,60 \ Set 12288+102*8+7,0
+
+    For X=0->6 \ Set 12288+X+103*8+1,Get(12288+X+8*79) \ End
+    Set 12288+103*8,7 \ Set 12288+103*8+6,60 \ Set 12288+103*8+7,0
+
+    For X=0->6 \ Set 12288+X+104*8+1,Get(12288+X+8*79) \ End
+    Set 12288+104*8,102 \ Set 12288+104*8+6,60 \ Set 12288+104*8+7,0
+
+    For X=0->6 \ Set 12288+X+105*8+1,Get(12288+X+8*79) \ End
+    Set 12288+105*8,195 \ Set 12288+105*8+1,Get(12288+105*8+1) OR 195 \ Set 12288+105*8+6,60 \ Set 12288+105*8+7,0
+
+    For X=0->6 \ Set 12288+X+106*8+1,Get(12288+X+8*85) \ End
+    Set 12288+106*8,28 \ Set 12288+106*8+6,60 \ Set 12288+106*8+7,0
+
+    For X=0->6 \ Set 12288+X+107*8+1,Get(12288+X+8*85) \ End
+    Set 12288+107*8,66 \ Set 12288+107*8+6,60 \ Set 12288+107*8+7,0
+
+    For X=0->6 \ Set 12288+X+108*8+1,Get(12288+X+8*85) \ End
+    Set 12288+108*8,51 \ Set 12288+108*8+1,Get(12288+108*8+1) OR 51 \ Set 12288+108*8+6,60 \ Set 12288+108*8+7,0
+
+    Set {frmColor},2
+
+    For X=0->159 \ Set 13160+X,0 \ End
+
+    Set {frmColor},3
+
+    For X=0->871 \ Q=Get(12288+X) \ Set 13312+X,(QOR255) AND NOT (QAND255) \ End
+
+    Set {frmColor},4
+
+    For X=0->151 \ Set 14184+X,0 \ End
+
+    Set {frmColor},5
+
+    Set 1,Get(1) OR 4
+    Set 56334,Get(56334) OR 1
+    Set 53272,28
+
+    Set {frmColor},BgSave
