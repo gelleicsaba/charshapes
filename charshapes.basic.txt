@@ -90,8 +90,8 @@ number BgSave
 
     Set {frmColor},5
 
-    Set 1,Get(1) OR 4
-    Set H'DC0E,Get(H'DC0E) OR 1
+    Set 1,Get(1) OR b'0100
+    Set H'DC0E,Get(H'DC0E) OR b'0001
     Set H'D018,B'00011100
 
     Set {frmColor},BgSave
