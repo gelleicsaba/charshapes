@@ -80,23 +80,178 @@ while t<len(inLines2):
             y=len(using)-(x+1)
             inLines2.insert(t,using[y])
     elif inLines2[t].strip()[:2]=="! ":
+        if verb:
+            print("Row is disabled with test mode: " + inLines2[t].strip())
         if not testCase:
             inLines2[t]="\t"+inLines2[t].strip()[2:]
         else:
             inLines2[t]=""
     elif inLines2[t].strip()[:2]=="? ":
+        if verb:
+            print("Row is enabled with test mode: " + inLines2[t].strip())
         if not testCase:
             inLines2[t]=""
         else:
             inLines2[t]="\t"+inLines2[t].strip()[2:]
     t=t+1
 
+skipSubRoutine=10000
+subRes=True
+t=0
+while t<len(inLines2):
+    if inLines2[t].rstrip()[:7]=="struct ":
+        sp=inLines2[t].rstrip().split()
+        cName=sp[1]
+        cBufSize=int(sp[2])
+        if verb:
+            print("Create '"+cName+"' struct & subroutines")
+        q=t+1
+        inLines2[t]=""
+        elements=[]
+        types=[]
+        arrays=[]
+        defaults=[]
+        while q<len(inLines2) and inLines2[q].rstrip()[:3]!="---":
+            sp=inLines2[q].rstrip().split()
+            elements.append(sp[0])
+            defaults.append(sp[1])
+            if sp[1].startswith("\""):
+                types.append("string")
+                arrays.append(0)
+            elif sp[1].startswith("ref"):
+                types.append("ref")
+                arrays.append(0)
+            elif sp[1].startswith("("):
+                types.append("array")
+                arrNum=int(sp[1].replace("(","").replace(")",""))
+                arrays.append(arrNum)
+            else:
+                types.append("number")
+                arrays.append(0)
+            inLines2[q]=""
+            q=q+1
+        if inLines2[q].rstrip()[:3]=="---":
+            inLines2[q]=""
+        ins=[]
+        if subRes:
+            ins.append("number SubResult")
+            subRes=False
+        ins.append("define "+cName+".MAX$="+str(cBufSize))
+        ins.append("number "+cName+".$")
+        for q in range(len(elements)):
+            if (types[q]!="array"):
+                ins.append(types[q]+" "+cName+"."+elements[q])
+            else:
+                ins.append("number "+cName+"."+elements[q])
+        ins.append("\tDIM "+cName+".$("+str(cBufSize)+")")
+        for q in range(len(elements)):
+            if (types[q]!="array"):
+                ins.append("\tDIM "+cName+"."+elements[q]+"("+str(cBufSize)+")")
+            else:
+                ins.append("\tDIM "+cName+"."+elements[q]+"("+str(cBufSize)+","+str(arrays[q])+")")
+        ins.append("\tGOTO @skipSubRoutine"+str(skipSubRoutine)+":")
+        ins.append("@New"+cName+":")
+        ins.append("\tFOR SubResult=0 TO "+cName+".MAX$-1")
+        ins.append("\tIF "+cName+".$(SubResult)<>1 THEN GOTO @new"+cName+":")
+        ins.append("\tNEXT")
+        ins.append("\tSubResult=-1")
+        ins.append("\tRETURN")
+        ins.append("@new"+cName+":")
+        ins.append("\t"+cName+".$(SubResult)=1")
+        for q in range(len(elements)):
+            if (types[q]!="array"):
+                ins.append("\t"+cName+"."+elements[q]+"(SubResult)="+defaults[q])
+            else:
+                ins.append("\tFORZ9=0TO"+str(arrays[q])+"-1:"+cName+"."+elements[q]+"(SubResult,Z9)=0:NEXT")
+        ins.append("\tRETURN")
+
+        ins.append("@Free"+cName+":")
+        ins.append("\t"+cName+".$(SubResult)=0")
+        for q in range(len(elements)):
+            if types[q]=="string":
+                ins.append("\t"+cName+"."+elements[q]+"(SubResult)=\"\"")
+            else:
+                ins.append("\t"+cName+"."+elements[q]+"(SubResult)=-1")
+        ins.append("\tRETURN")
+
+        ins.append("@skipSubRoutine"+str(skipSubRoutine)+":")
+        skipSubRoutine=skipSubRoutine+1
+        for x in range(len(ins)):
+            y=len(ins)-(x+1)
+            inLines2.insert(t,ins[y]+"\n")
+        t=t+len(ins)
+    elif inLines2[t].lstrip()[:4]=="NEW ":
+        sp=inLines2[t].strip().split()
+        cName=sp[1]
+        if sp[2]=="AS":
+            ref=sp[3]
+            if verb:
+                print("Found a new instance request with '"+ref+"'")
+            inLines2[t]="\tGOSUB @New"+cName+": : "+ref+"=SubResult"
+    elif inLines2[t].lstrip()[:5]=="FREE ":
+        sp=inLines2[t].strip().split()
+        cName=sp[1]
+        ref=sp[2]
+        if verb:
+            print("Found a new instance request with '"+ref+"'")
+        inLines2[t]="\tSubResult="+ref+":GOSUB @Free"+cName+":"
+    t = t + 1
+
+withFinds=[]
+withReplaces=[]
+for x in range(len(inLines2)):
+    if inLines2[x].lstrip()[:5]=="WITH ":
+        sp=inLines2[x].strip().split()
+        withFinds.append(sp[1]+".")
+        withReplaces.append(sp[2]+".")
+        inLines2[x]=""
+    elif inLines2[x].strip()[:7]=="CLRWITH":
+        withFinds=[]
+        withReplaces=[]
+        inLines2[x]=""
+    if len(withFinds)>0:
+        for y in range(len(withFinds)):
+            if inLines2[x].find(withFinds[y]) > -1:
+                inLines2[x]=inLines2[x].replace(withFinds[y],withReplaces[y])
+
+withFinds=None
+withReplaces=None
+
 for t in range(len(inLines2)):
+
+    if inLines2[t].find("'")>-1:
+        row=inLines2[t].strip()
+        for q in range(len(row)):
+            finds=[]
+            repls=[]
+            if row[q]=="'":
+                if row[q-1]=="h":
+                    num=int("0x"+row[q+1:q+3], 0)
+                    finds.append("h'"+row[q+1:q+3])
+                    repls.append(str(num))
+                elif row[q-1]=="H":
+                    num=int("0x"+row[q+1:q+5], 0)
+                    finds.append("H'"+row[q+1:q+5])
+                    repls.append(str(num))
+                elif row[q-1]=="B":
+                    num=int(row[q+1:q+9], 2)
+                    finds.append("B'"+row[q+1:q+9])
+                    repls.append(str(num))
+                elif row[q-1]=="b":
+                    num=int(row[q+1:q+5], 2)
+                    finds.append("b'"+row[q+1:q+5])
+                    repls.append(str(num))
+            for p in range(len(finds)):
+                if verb:
+                    print("Replace contant " + finds[p]+"  ->  "+repls[p])
+                inLines2[t]=inLines2[t].replace(finds[p],repls[p])
+
     if inLines2[t].strip()[:7]=="define ":
         tmp=inLines2[t].strip()[7:].split("=")
         defines1.append(tmp[0].strip().replace("\\20"," "))
         defines2.append(tmp[1].strip().replace("\\20"," "))
         inLines2[t]=""
+
 varIndex1=0
 varIndex2=0
 var1st="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -116,6 +271,21 @@ for t in range(len(inLines2)):
             varIndex1 = varIndex1 + 1
             varIndex2 = 0
         inLines2[t]=""
+    elif inLines2[t].strip()[:4]=="ref ":
+        varName=inLines2[t].strip()[4:]
+        varRealName=var1st[varIndex1]+var2nd[varIndex2]
+        if verb:
+            print("Create a reference to '"+varName+"' ('"+varRealName+"').")
+        defines1.append(varName)
+        defines2.append(varRealName)
+        varIndex2 = varIndex2 + 1
+        if varIndex2==len(var2nd):
+            varIndex1 = varIndex1 + 1
+            varIndex2 = 0
+        inLines2[t]=""
+
+
+
 for t in range(len(defines1)):
     if verb:
         print("Replace defines, '"+defines1[t]+"' to '"+defines2[t]+"'.")
@@ -133,7 +303,8 @@ if not skipCm:
             else:
                 inLines.append(inLines2[x])
         else:
-            print("Skip empty line on row " + str(x))
+            if verb:
+                print("Skip empty line on row " + str(x))
 else:
     inLines=[]
     for x in range(len(inLines2)):

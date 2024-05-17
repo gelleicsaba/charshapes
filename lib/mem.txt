@@ -1,8 +1,8 @@
-define {color}=55296
-define {screen}=1024
-define {frmColor}=53280
-define {bgColor}=53281
-define {keyInput}=197
-define {charMode}=53272
-define {upperMode}=21
-define {lowerMode}=23
+define {color}=H'D800
+define {screen}=H'0400
+define {frmColor}=H'D020
+define {bgColor}=H'D021
+define {keyInput}=h'C5
+define {charMode}=H'D018
+define {upperMode}=B'00010101
+define {lowerMode}=B'00010111
