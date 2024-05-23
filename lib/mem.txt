@@ -6,3 +6,6 @@ define {keyInput}=h'C5
 define {charMode}=H'D018
 define {upperMode}=B'00010101
 define {lowerMode}=B'00010111
+define {video}=H'D011
+define {videoOff}=h'00
+define {videoOn}=h'1b

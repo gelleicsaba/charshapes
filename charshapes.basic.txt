@@ -5,18 +5,34 @@ using "lib/statements.txt"
 include "lib/mem.txt"
 
 number BgSave
+number Char
+number CharPos
 
 @Main:
-    ClearScreen \ Print CHR$(h'0D)+CHR$(h'0D)+CHR$(h'0D)+CHR$(h'0D)+CHR$(h'0D)+CHR$(h'0D)+CHR$(h'0D)
-    Print "PLEASE WAIT WHILE LOADING..."
+    ClearScreen 
+    Print CHR$(h'0D)+CHR$(h'0D)+CHR$(h'0D)+CHR$(h'0D)+CHR$(h'0D)+CHR$(h'0D)+CHR$(h'0D)+CHR$(h'0D)
+    Print CHR$(h'0D)+CHR$(h'0D)+CHR$(h'0D)+CHR$(h'0D)+CHR$(h'0D)
     BgSave=Peek({frmColor}) \ Set {frmColor},0
+    Set {video},{videoOff}
 
     Set H'DC0E,Get(H'DC0E) AND B'11111110
     Set 1,Get(1) AND B'11111011
 
     # *** PUT 256 CHARACTERS FOR TEST ***
-    For X=0->255 \ Set {screen}+X,X \ End
+    []
+    Char=0
+    CharPos={screen}
+    For Y=0->15
+        FOR X=0->15
+            Set CharPos,Char
+            Char=Char+1
+            CharPos=CharPos+1
+        End
+        CharPos=CharPos+24
+    End
     Set {frmColor},1
+    [/]
+
 
     # *** COPY ROM CHARS TO RAM ***
     For X=0->727 \ Set H'3000+X,Get(H'D800+X) \ End
@@ -76,6 +92,17 @@ number BgSave
     For X=0->6 \ Set H'3000+X+108*8+1,Get(H'3000+X+8*85) \ End
     Set H'3000+108*8,B'00110011 \ Set H'3000+108*8+1,Get(H'3000+108*8+1) OR B'00110011 \ Set H'3000+108*8+6,B'00111100 \ Set H'3000+108*8+7,0
 
+    []
+    Set H'3000+64*8+1,B'11111100
+    Set H'3000+64*8+2,B'11111100
+    Set H'3000+64*8+3,B'11111100
+    Set H'3000+64*8+4,B'11111100
+    Set H'3000+64*8+5,B'11111100
+    Set H'3000+64*8+6,B'11111100
+    Set H'3000+64*8+7,B'00000000
+    Set H'3000+64*8+8,B'00000000
+    [/]
+
     Set {frmColor},2
 
     For X=0->159 \ Set H'3368+X,0 \ End
@@ -90,8 +117,12 @@ number BgSave
 
     Set {frmColor},5
 
+    []
     Set 1,Get(1) OR b'0100
     Set H'DC0E,Get(H'DC0E) OR b'0001
     Set H'D018,B'00011100
 
     Set {frmColor},BgSave
+    Set {video},{videoOn}
+    [/]
+
